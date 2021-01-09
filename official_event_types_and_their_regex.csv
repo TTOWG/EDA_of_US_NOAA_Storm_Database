@@ -1,0 +1,49 @@
+,EventName,Regex
+1,Astronomical Low Tide,^(?=.*low.*).*tide.*
+2,Avalanche,.*avalanche.*
+3,Blizzard,.*blizzard.*
+4,Coastal Flood,(^(?=.*(coast|cstl).*).*flood.*)|.*erosion.*
+5,Cold/Wind Chill,^(?!.*(excessive|extreme|record|severe|unusually)).*(chill|cold|cool).*
+6,Debris Flow,.*debris.*
+7,Dense Fog,^(?!.*burst).*dense.*fog.*|.*fog.*dense.*|.*wet.*
+8,Dense Smoke,.*smoke.*
+9,Drought,^(?!.*burst).*(drought|dr[iy]).*|(.*below.*precipitation.*)
+10,Dust Devil,^(?!.*waterspout).*dev[ei]l.*
+11,Dust Storm,^(?!.*dev[ei]l).*dust.*
+12,Excessive Heat,(.*excessive.*|.*extreme.*|.*record.*).*(heat|temp|high|warm).*|.*temperature.*record.*
+13,Extreme Cold/Wind Chill,.*(excessive|extreme|record|severe|unusually).*(chill|cold|cool|low).*
+14,Flash Flood,.*flash.*flood.*|.*flood.*flash.*|.*(slide|slump).*|.*ris.*water.*|.*water.*ris.*
+15,Flood,^(?!.*(flash|coast|lakeshore|landslide)).*(flood|fld).*|.*dam.*break.*|.*drown.*
+16,Frost/Freeze,^(?!.*fog).*(frost|freez).*
+17,Funnel Cloud,.*funnel.*cloud.*|.*cloud.*funnel.*
+18,Freezing Fog,^(?!.*dense).*fog.*
+19,Hail,^(?!.*marine).*hail.*
+20,Heat,^(?!.*(excessive|extreme|record)).*(heat|warm|hot|thermia|temp).*
+21,Heavy Rain,^(?!.*(snow|below)).*(rain|precipitation).*
+22,Heavy Snow,^(?!.*(snowmelt|storm)).*(snow|ic[ey]).*
+23,High Surf,^(?!.*flood).*surf.*
+24,High Wind,^(?!.*marine).*high.*wind.*
+25,Hurricane (Typhoon),.*(hurricane|typhoon|floyd).*
+26,Ice Storm,.*ice.*storm.*|.*glaze.*
+27,Lake-Effect Snow,.*lake.*effect.*
+28,Lakeshore Flood,.*lakeshore.*
+29,Lightning,^(?!.*(snow|rain)).*light.*
+30,Marine Hail,.*marine.*hail.*|.*hail.*marine.*
+31,Marine High Wind,^(?=.*marine).*high.*wind.*
+32,Marine Strong Wind,(^(?=.*marine).*strong.*wind.*)|.*(swell|rough).*
+33,Marine Thunderstorm Wind,^(?=.*marine).*(thunderstorm|tstm|accident).*
+34,Rip Current,.*rip.*
+35,Seiche,.*seiche.*
+36,Sleet,.*(sleet|mix).*
+37,Storm Surge/Tide,.*(surge|tide).*|.*high.*water.*|.*coast.*storm.*|.*(high|heavy).*sea.*|.*metro.*
+38,Strong Wind,^(?!.*marine).*(wind|wnd|gust|wave).*
+39,Thunderstorm Wind,^(?!.*marine).*(thunderstorm|tstm|burst|gustnado).*
+40,Tornado,^(?!.*(debris|funnel)).*(tornado|landspout|cloud).*
+41,Tropical Depression,.*depression.*
+42,Tropical Storm,^(?!.*depression).*tropical.*
+43,Tsunami,.*tsunami.*
+44,Volcanic Ash,.*(volcanic|vog).*
+45,Waterspout,.*waterspout.*
+46,Wildfire,.*fire.*|(.*red.*flag.*)
+47,Winter Storm,^(?=.*storm).*winter.*
+48,Winter Weather,^(?!.*storm).*winter.*

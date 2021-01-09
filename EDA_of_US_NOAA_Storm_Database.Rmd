@@ -1,0 +1,58 @@
+---
+title: 'EDA: US NOAA Storm Database'
+author: "TTOWG"
+date: "12/17/2020"
+output: 
+  html_document: 
+    keep_md: yes
+---
+
+
+# Exploratory Data Analysis of the US National Oceanic and Atmospheric Administration (NOAA) Storm Database
+
+## ... to the only wise God (TTOWG!)
+
+First, the storm database is read in as a dataframe; consequently, the gross structure of the dataframe (number of variables and observations, variable names and classes) is viewed in order to familiarize with the database.
+
+```{r Loading_data, echo=TRUE, cache=TRUE}
+StormData = read.csv("repdata_data_StormData.csv")
+str(StormData)
+```
+
+From the output of the last code chunk, displayed above, the database consists of `r nrow(StormData)` observations of `r ncol(StormData)` variables.
+
+Since the database is a sort of time series, it is important check if the dates at the beginning (head) and end (tail) of the dataframe matches the expected 1950 - 2011 range.
+
+```{r checking_time_start, echo=TRUE}
+head(StormData["BGN_DATE"])
+```
+
+```{r checking_time_end, echo=TRUE}
+tail(StormData["BGN_DATE"])
+```
+
+```{r}
+StormData_subset = StormData %>% mutate(BGN_DATE = gsub(" 0:00:00","", StormData$BGN_DATE)) %>% mutate(BGN_DATE = as.Date(BGN_DATE, "%m/%d/%Y")) %>% filter(!grepl(pattern=".*(other|summary|none).*", tolower(StormData$EVTYPE), perl = TRUE)) %>% filter(BGN_DATE > as.Date("1996-01-01"))
+```
+
+```{r}
+EVTYPE_OFFICIAL = read.csv("official_event_types_and_their_regex.csv")
+```
+
+```{r}
+EventRows = lapply(X = EVTYPE_OFFICIAL$Regex, FUN = grep, x = tolower(Event_ranking$EVTYPE), perl = TRUE)
+df = data.frame(matrix(unlist(EventRows), nrow=488, byrow=T))
+leftout = setdiff(seq(from = 1, to = 444, by = 1), df$matrix.unlist.EventRows...nrow...488..byrow...T.)
+leftout
+```
+
+```{r}
+
+```
+
+
+```{r, echo=TRUE}
+library(dplyr)
+Event_ranking = StormData_subset %>% group_by(EVTYPE) %>% summarise(Total_Prop_Damage = sum(PROPDMG), Total_Crop_Damage = sum(CROPDMG), Total_Damage = sum(PROPDMG+CROPDMG)) %>% arrange(desc(Total_Damage))
+```
+
