@@ -12,16 +12,29 @@ output:
 
 ## ... to the only wise God (TTOWG!)
 
-First, the storm database is read in as a dataframe; consequently, the gross structure of the dataframe (number of variables and observations, variable names and classes) is viewed in order to familiarize with the database.
+## Synopsis
+This report present the procedure and results of an exploratory data analysis conducted on the US National Oceanic and Atmospheric Administration (NOAA) Storm Database. The analysis sought to answer questions on the relative impacts of various weather event types thereby aiding the preparations and resource allocations for future severe weather events. This objective was achieved by ranking the event types, in the database, on the basis of their respective economic and public health consequences. Considerable amount of efforts was devoted to processing the raw NOAA data to make it fit for the intended analysis. Thereafter, the processed data was explored and results are here presented showing floods and tornadoes as most impactful events in terms of economic and public health consequences, respectively.
 
-```{r Loading_data, echo=TRUE, cache=TRUE}
+
+## Data Processing
+
+### Loading and previewing the data
+First, the database was downloaded as a [compressed file](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2) and decompressed into the proect directory. The decompressed *.csv* file was then read in as a dataframe.
+
+```{r Loading_data, echo = TRUE, cache=TRUE}
 StormData = read.csv("repdata_data_StormData.csv")
+
+```
+
+Consequently, the gross structure of the dataframe (number of variables and observations, variable names and classes) was viewed in order to familiarize with the database.
+
+```{r Viewing_data_structure, echo = TRUE}
 str(StormData)
 ```
 
 From the output of the last code chunk, displayed above, the database consists of `r nrow(StormData)` observations of `r ncol(StormData)` variables.
 
-Since the database is a sort of time series, it is important check if the dates at the beginning (head) and end (tail) of the dataframe matches the expected 1950 - 2011 range.
+Since the database is a sort of time series, it is important to check if the dates at the beginning (head) and end (tail) of the dataframe matches the expected 1950 - 2011 range.
 
 ```{r checking_time_start, echo=TRUE}
 head(StormData["BGN_DATE"])
@@ -31,28 +44,108 @@ head(StormData["BGN_DATE"])
 tail(StormData["BGN_DATE"])
 ```
 
+
+### Filtering the data
+Some rows of the database were filtered out. Here are the justifications for the filtering:
+
+- some recorded event types are denoted as *"other", "none", "no severe"* etc.
+- full recording of all event types only commenced from 1996; pre-1996 data are therefore excluded.
+
+However, the BGN_DATE column of the dataframe was first made a data object inorder to facilitate the second filtering
 ```{r}
-StormData_subset = StormData %>% mutate(BGN_DATE = gsub(" 0:00:00","", StormData$BGN_DATE)) %>% mutate(BGN_DATE = as.Date(BGN_DATE, "%m/%d/%Y")) %>% filter(!grepl(pattern=".*(other|summary|none).*", tolower(StormData$EVTYPE), perl = TRUE)) %>% filter(BGN_DATE > as.Date("1996-01-01"))
+library(dplyr)
+StormData_subset = StormData %>% mutate(BGN_DATE = gsub(" 0:00:00","", StormData$BGN_DATE)) %>% mutate(BGN_DATE = as.Date(BGN_DATE, "%m/%d/%Y")) %>% filter(!grepl(pattern=".*(other|summary|none|no severe).*", tolower(StormData$EVTYPE), perl = TRUE)) %>% filter(BGN_DATE > as.Date("1996-01-01"))
+```
+
+
+### Classifiying weather events
+
+While the filtered database contains `r length(unique(StormData_subset$EVTYPE))` unique event types, the NOAA only recognized 48 official event types. Of course, the difference is due to reasons such as typos, styles (lower/upper case letters), naming variants etc. Hence, efforts were made to classify each of the recorded `r length(unique(StormData_subset$EVTYPE))` unique events as one (and only one) of the 48 official event types.
+The approach taken here was to craft regular expressions (regex) for  each of the 48 official events. All recorded event that match a given regular expression are therefore classified as belonging to that official event type.
+
+
+```{r}
+OfficialEvents = read.csv("official_event_types_and_their_regex.csv")
 ```
 
 ```{r}
-EVTYPE_OFFICIAL = read.csv("official_event_types_and_their_regex.csv")
-```
-
-```{r}
-EventRows = lapply(X = EVTYPE_OFFICIAL$Regex, FUN = grep, x = tolower(Event_ranking$EVTYPE), perl = TRUE)
-df = data.frame(matrix(unlist(EventRows), nrow=488, byrow=T))
-leftout = setdiff(seq(from = 1, to = 444, by = 1), df$matrix.unlist.EventRows...nrow...488..byrow...T.)
+EventRows = lapply(X = OfficialEvents$Regex, FUN = grep, x = tolower(StormData_subset$EVTYPE), perl = TRUE)
+df = data.frame(matrix(unlist(EventRows), nrow=653371, byrow=T))
+names(df) = c("RowID")
+uniqi = length(unique(df$RowID))
+leftout = setdiff(seq(from = 1, to = 653371, by = 1), df$RowID)
 leftout
+
+duplicatedRows = df %>% group_by(RowID) %>% filter(n()>1) %>% summarize(n=n())
+
+
 ```
 
 ```{r}
+StormData_subset$EVTYPE_OFFICIAL = StormData_subset$EVTYPE
+for (i in 1:length(OfficialEvents$Regex)){
+ StormData_subset$EVTYPE_OFFICIAL = gsub(pattern = OfficialEvents$Regex[i], replacement = OfficialEvents$EventName[i], x = tolower(StormData_subset$EVTYPE_OFFICIAL), perl = TRUE) 
+}
 
 ```
 
+
+
+
+```{r}
+PROPDMG_multiplier_table = data.frame(PROPDMGEXP = levels(StormData_subset$PROPDMGEXP), PROPDMG_multiplier = c(0, 0, 0, 1, rep(10,9),1E9, 100, 100, 1000, 1E6, 1E6))
+
+CROPDMG_multiplier_table = data.frame(CROPDMGEXP = levels(StormData_subset$CROPDMGEXP), CROPDMG_multiplier = c(0, 0, 10, 10, 1E9, 1000, 1000, 1E6, 1E6))
+
+library(dplyr)
+StormData_subset = inner_join(StormData_subset, PROPDMG_multiplier_table)
+StormData_subset = inner_join(StormData_subset, CROPDMG_multiplier_table)
+```
+
+```{r}
+library(dplyr)
+StormData_subset = StormData_subset %>% mutate(PROPDMG = PROPDMG*PROPDMG_multiplier, CROPDMG = CROPDMG*CROPDMG_multiplier)
+```
 
 ```{r, echo=TRUE}
 library(dplyr)
-Event_ranking = StormData_subset %>% group_by(EVTYPE) %>% summarise(Total_Prop_Damage = sum(PROPDMG), Total_Crop_Damage = sum(CROPDMG), Total_Damage = sum(PROPDMG+CROPDMG)) %>% arrange(desc(Total_Damage))
+Eventranking_economic = StormData_subset %>% group_by(EVTYPE_OFFICIAL) %>% summarise(Total_Prop_Damage = sum(PROPDMG), Total_Crop_Damage = sum(CROPDMG), Total_Damage = sum(PROPDMG+CROPDMG)) %>% arrange(desc(Total_Damage))
+```
+
+```{r}
+library(dplyr)
+Eventranking_harm = StormData_subset %>% group_by(EVTYPE_OFFICIAL) %>% summarise(Total_Fatalities = sum(FATALITIES), Total_Injuries = sum(INJURIES), Total_harm = sum(FATALITIES+INJURIES)) %>% arrange(desc(Total_harm))
+```
+
+```{r}
+Eventranking_economic$EVTYPE_OFFICIAL <- factor(Eventranking_economic$EVTYPE_OFFICIAL, levels = Eventranking_economic$EVTYPE_OFFICIAL)
+library(ggplot2)
+ggplot(Eventranking_economic[1:20,], aes(x=EVTYPE_OFFICIAL, y=Total_Damage)) + 
+  geom_bar(stat="identity", width=.5, fill="blue") + 
+  labs(title="Ordered Bar Chart", 
+       subtitle="Make Vs Avg. Mileage", 
+       caption="source: mpg") + 
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+```
+
+```{r}
+Eventranking_harm$EVTYPE_OFFICIAL <- factor(Eventranking_harm$EVTYPE_OFFICIAL, levels = Eventranking_harm$EVTYPE_OFFICIAL)
+library(ggplot2)
+ggplot(Eventranking_harm[1:20,], aes(x=EVTYPE_OFFICIAL, y=Total_harm)) + 
+  geom_bar(stat="identity", width=.5, fill="blue") + 
+  labs(title="Ordered Bar Chart", 
+       subtitle="Make Vs Avg. Mileage", 
+       caption="source: mpg") + 
+  theme(axis.text.x = element_text(angle=90, vjust=0.6))
+```
+
+```{r}
+library(tidyverse)
+
+Eventranking_economic2 <- Eventranking_economic %>%
+  gather(Total, Value, EVTYPE_OFFICIAL)
+
+ggplot(Eventranking_economic2, aes(x = EVTYPE_OFFICIAL, y = Value, fill = Total)) +
+  geom_col(position = "dodge")
 ```
 
